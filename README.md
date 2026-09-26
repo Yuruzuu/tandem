@@ -1,6 +1,6 @@
-# Tandem
+<h1 align="center"><img src="docs/banner.png" alt="Tandem" width="100%"></h1>
 
-**Use Claude Code as a model in the Codex desktop app.**
+<p align="center"><b>Use Claude Code as a model in the Codex desktop app.</b></p>
 
 Tandem adds **Claude Opus 5.5 (Claude Code)** to the Codex model picker, next to your GPT models. Your own Claude Code installation runs the agent loop (its prompt, read and search tools, web tools, skills, subagents, MCP servers and `CLAUDE.md`), while Codex runs the shell commands and file edits with its normal approvals and shows them as its own command and diff cards. GPT keeps working exactly as before.
 
