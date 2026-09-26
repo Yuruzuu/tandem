@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "tandem": {
+      "command": "cmd.exe",
+      "cwd": ".",
+      "args": ["/d", "/s", "/c", "call", "./scripts/tandem.cmd", "mcp"],
+      "startup_timeout_sec": 20
+    }
+  }
+}

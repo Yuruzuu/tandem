@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: plugins/tandem
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: python -m pip install cryptography
+      - name: Python tests
+        run: python -B -m unittest discover -s tests -p "test_*.py" -v
+      - name: Router tests
+        env:
+          PYTHON: python
+        run: node --test tests/router.test.cjs

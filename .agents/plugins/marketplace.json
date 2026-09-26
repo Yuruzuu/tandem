@@ -1,0 +1,20 @@
+{
+  "name": "tandem",
+  "interface": {
+    "displayName": "Tandem"
+  },
+  "plugins": [
+    {
+      "name": "tandem",
+      "source": {
+        "source": "local",
+        "path": "./plugins/tandem"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

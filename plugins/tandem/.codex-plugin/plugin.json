@@ -1,0 +1,25 @@
+{
+  "name": "tandem",
+  "version": "0.1.0",
+  "description": "Use Claude Code as a model in the Codex desktop app, with Codex running its commands and edits.",
+  "author": {
+    "name": "Yuruzuu",
+    "url": "https://github.com/Yuruzuu"
+  },
+  "homepage": "https://github.com/Yuruzuu/tandem",
+  "repository": "https://github.com/Yuruzuu/tandem",
+  "license": "MIT",
+  "keywords": ["claude-code", "codex", "model-picker", "harness"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Tandem",
+    "shortDescription": "Claude Code in the Codex model picker.",
+    "longDescription": "Adds Claude Opus 5.5 (Claude Code) next to your GPT models. Claude Code runs the agent loop, reading, search, skills and subagents with your own Claude login; Codex executes its shell commands and file edits with normal approvals and shows them as native command and diff cards. GPT keeps its default, login and traffic.",
+    "developerName": "Yuruzuu",
+    "category": "Productivity",
+    "capabilities": [],
+    "websiteURL": "https://github.com/Yuruzuu/tandem",
+    "defaultPrompt": ["Enable Tandem so I can pick Claude Opus 5.5 (Claude Code) in the model picker"]
+  }
+}
