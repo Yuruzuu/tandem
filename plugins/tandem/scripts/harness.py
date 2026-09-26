@@ -392,15 +392,15 @@ class Session:
         self.alive = True
         self.seen_output = False
         self.turn_active = False
+        # Background tasks (subagents) Claude Code reports as still running, by id -> description.
+        self.background = {}
+        self.task_names = {}
         self.last_active = time.monotonic()
         self.stderr_tail = ''
         if not any(name in kinds for name in ('exec_command', 'shell', 'shell_command')) or 'apply_patch' not in kinds:
             raise ProtocolError('Claude Code requires Codex shell and apply_patch relays; native shell and editing tools stay disabled.')
         env = windows_environment(dict(os.environ))
         env['MCP_TOOL_TIMEOUT'] = str(24 * 3600 * 1000)
-        # Codex shows one response per turn. Background subagents or shells would let Claude Code end the
-        # turn early and continue later where Codex can't see it, so keep all work in the foreground.
-        env['CLAUDE_CODE_DISABLE_BACKGROUND_TASKS'] = '1'
         resolved = resolve_claude(harness.command, env)
         if resolved is None:
             raise RuntimeError(INSTALL_HINT)
@@ -789,11 +789,25 @@ class Harness:
                         out.web_search_done(block.get('tool_use_id'))
             elif kind == 'system' and event.get('subtype') == 'compact_boundary':
                 out.activity('**Compacted context**')
+            elif kind == 'system' and event.get('subtype') == 'background_tasks_changed':
+                session.background = {task.get('task_id'): task.get('description') or 'task' for task in event.get('tasks') or []}
+            elif kind == 'system' and event.get('subtype') == 'task_started':
+                session.task_names[event.get('task_id')] = event.get('description') or 'task'
+            elif kind == 'system' and event.get('subtype') == 'task_notification':
+                name = session.task_names.pop(event.get('task_id'), 'task')
+                out.activity(f"**Subagent {event.get('status') or 'finished'}**: {name}")
             elif kind == 'result':
                 session.turn_active = False
                 if event.get('is_error'):
                     out.fail(str(event.get('result') or event.get('subtype') or 'Claude Code turn failed'))
                     return 'failed'
+                if session.background or event.get('queued_turn_count'):
+                    # Claude Code paused while background subagents run; it continues in a new turn when they
+                    # report back. Keep the Codex response open so that continuation is part of this turn.
+                    session.turn_active = True
+                    out.close_reasoning()
+                    out.close_message('commentary')
+                    continue
                 out.finish(final=True)
                 return 'done'
             if session.should_yield():

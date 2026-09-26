@@ -39,6 +39,18 @@ for line in sys.stdin:
     if 'SILENT_FIXTURE' in words:
         time.sleep(60)
         continue
+    if 'in the background' in words:
+        stream(f'm{turn}g', [{'type': 'tool_use', 'id': 'toolu_agent', 'name': 'Agent', 'input': {'description': 'Count files'}}])
+        out({'type': 'system', 'subtype': 'background_tasks_changed', 'tasks': [{'task_id': 'task1', 'task_type': 'local_agent', 'description': 'Count files'}]})
+        out({'type': 'system', 'subtype': 'task_started', 'task_id': 'task1', 'description': 'Count files', 'is_backgrounded': True})
+        stream(f'm{turn}h', [{'type': 'text', 'text': 'Waiting on the subagent.'}])
+        out({'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'waiting', 'queued_turn_count': 0})
+        time.sleep(1)
+        out({'type': 'system', 'subtype': 'background_tasks_changed', 'tasks': []})
+        out({'type': 'system', 'subtype': 'task_notification', 'task_id': 'task1', 'status': 'completed', 'summary': 'long subagent answer'})
+        stream(f'm{turn}i', [{'type': 'text', 'text': 'There are 2 files.'}])
+        out({'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'done', 'queued_turn_count': 0, 'origin': {'kind': 'task-notification'}})
+        continue
     if 'search the web' in words:
         # Claude Code runs its own web tools; the harness only reports them.
         stream(f'm{turn}w', [{'type': 'tool_use', 'id': 'toolu_ws', 'name': 'WebSearch', 'input': {'query': 'tandem codex'}},
@@ -54,5 +66,5 @@ for line in sys.stdin:
     request = urllib.request.Request(f'http://127.0.0.1:{port}/relay', method='POST', headers={'Authorization': 'Bearer ' + token},
                                      data=json.dumps({'name': 'exec_command', 'arguments': {'cmd': 'echo hi'}, 'tool_use_id': f'toolu_{turn}'}).encode())
     result = json.load(urllib.request.urlopen(request))
-    stream(f'm{turn}b', [{'type': 'text', 'text': f"Done: {result['content'][0]['text']} (turn {turn}, saw {words!r}) background={os.environ.get('CLAUDE_CODE_DISABLE_BACKGROUND_TASKS')}"}])
+    stream(f'm{turn}b', [{'type': 'text', 'text': f"Done: {result['content'][0]['text']} (turn {turn}, saw {words!r})"}])
     out({'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'ok'})

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2 — 2026-09-26
+
+- Background subagents work again. When Claude Code pauses to wait for them, Tandem keeps the Codex turn open and streams Claude's follow-up into it once they report back, so Claude can keep working while subagents run. This replaces the 0.2.1 workaround that forced subagents into the foreground.
+- A "Subagent completed" line appears in the activity panel when a background subagent finishes.
+
 ## 0.2.1 — 2026-09-26
 
 - Fixed turns ending early when Claude Code started a background subagent. Claude Code now runs subagents and other tasks in the foreground, so their results land in the same Codex turn instead of arriving unseen after it ended.

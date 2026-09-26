@@ -77,8 +77,6 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(message['phase'], 'final_answer')
         # The preamble is Codex's own harness prompt; the environment context and request reach Claude Code.
         self.assertTrue(message['content'][0]['text'].startswith('Done: hi (turn 1'))
-        # Claude Code must not end turns early to wait on background work Codex can't see.
-        self.assertTrue(message['content'][0]['text'].endswith('background=1'))
         self.assertIn('hi', message['content'][0]['text'])
         self.assertNotIn('preamble', message['content'][0]['text'])
 
@@ -87,6 +85,19 @@ class HarnessTests(unittest.TestCase):
         third = self.turn(rows)
         self.assertEqual(third[-1]['response']['output'][2]['call_id'], 'toolu_2')
         self.assertEqual(json.loads((self.state / 'harness-sessions.json').read_text())['thread-1']['cwd'], str(self.state))
+
+    def test_background_subagent_continuation_stays_in_the_same_codex_turn(self):
+        rows = [
+            {'role': 'user', 'content': [{'type': 'input_text', 'text': f'<environment_context>\n  <cwd>{self.state}</cwd>\n</environment_context>'}]},
+            {'role': 'user', 'content': 'count them in the background'},
+        ]
+        events = self.turn(rows)
+        self.assertEqual(events[-1]['type'], 'response.completed')
+        messages = [item for item in events[-1]['response']['output'] if item['type'] == 'message']
+        self.assertEqual([(m['content'][0]['text'], m['phase']) for m in messages],
+                         [('Waiting on the subagent.', 'commentary'), ('There are 2 files.', 'final_answer')])
+        notes = [item['summary'][0]['text'] for item in events[-1]['response']['output'] if item['type'] == 'reasoning' and item['summary']]
+        self.assertIn('**Subagent completed**: Count files', notes)
 
     def test_claude_code_web_tools_become_native_web_search_items(self):
         rows = [
