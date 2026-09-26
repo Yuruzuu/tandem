@@ -398,6 +398,9 @@ class Session:
             raise ProtocolError('Claude Code requires Codex shell and apply_patch relays; native shell and editing tools stay disabled.')
         env = windows_environment(dict(os.environ))
         env['MCP_TOOL_TIMEOUT'] = str(24 * 3600 * 1000)
+        # Codex shows one response per turn. Background subagents or shells would let Claude Code end the
+        # turn early and continue later where Codex can't see it, so keep all work in the foreground.
+        env['CLAUDE_CODE_DISABLE_BACKGROUND_TASKS'] = '1'
         resolved = resolve_claude(harness.command, env)
         if resolved is None:
             raise RuntimeError(INSTALL_HINT)

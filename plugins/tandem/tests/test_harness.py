@@ -77,6 +77,8 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(message['phase'], 'final_answer')
         # The preamble is Codex's own harness prompt; the environment context and request reach Claude Code.
         self.assertTrue(message['content'][0]['text'].startswith('Done: hi (turn 1'))
+        # Claude Code must not end turns early to wait on background work Codex can't see.
+        self.assertTrue(message['content'][0]['text'].endswith('background=1'))
         self.assertIn('hi', message['content'][0]['text'])
         self.assertNotIn('preamble', message['content'][0]['text'])
 

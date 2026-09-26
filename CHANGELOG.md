@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — 2026-09-26
+
+- Fixed turns ending early when Claude Code started a background subagent. Claude Code now runs subagents and other tasks in the foreground, so their results land in the same Codex turn instead of arriving unseen after it ended.
+
 ## 0.2.0 — 2026-09-26
 
 - Claude Code's web searches and page fetches now appear in Codex's activity panel as native web search rows.

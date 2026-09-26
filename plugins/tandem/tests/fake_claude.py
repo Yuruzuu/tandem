@@ -1,5 +1,6 @@
 """Stands in for `claude -p` stream-json: thinks, calls the Codex relay, then answers."""
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -53,5 +54,5 @@ for line in sys.stdin:
     request = urllib.request.Request(f'http://127.0.0.1:{port}/relay', method='POST', headers={'Authorization': 'Bearer ' + token},
                                      data=json.dumps({'name': 'exec_command', 'arguments': {'cmd': 'echo hi'}, 'tool_use_id': f'toolu_{turn}'}).encode())
     result = json.load(urllib.request.urlopen(request))
-    stream(f'm{turn}b', [{'type': 'text', 'text': f"Done: {result['content'][0]['text']} (turn {turn}, saw {words!r})"}])
+    stream(f'm{turn}b', [{'type': 'text', 'text': f"Done: {result['content'][0]['text']} (turn {turn}, saw {words!r}) background={os.environ.get('CLAUDE_CODE_DISABLE_BACKGROUND_TASKS')}"}])
     out({'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'ok'})
