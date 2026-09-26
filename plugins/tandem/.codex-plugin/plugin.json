@@ -1,6 +1,6 @@
 {
   "name": "tandem",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Use Claude Code as a model in the Codex desktop app, with Codex running its commands and edits.",
   "author": {
     "name": "Yuruzuu",

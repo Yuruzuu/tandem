@@ -100,13 +100,16 @@ test('Opus carriers are removed before a GPT request and Opus compaction becomes
     {type: 'compaction', encrypted_content: encrypt({type: 'codex_compaction', summary: 'earlier work'})},
     {type: 'reasoning', encrypted_content: encrypt({type: 'carrier'})},
     {type: 'reasoning', encrypted_content: 'gAAAA-native-openai'},
+    {type: 'web_search_call', id: 'ws_tandem_0123', status: 'completed', action: {type: 'search', query: 'x'}},
+    {type: 'web_search_call', id: 'ws_native', status: 'completed', action: {type: 'search', query: 'y'}},
     {role: 'user', content: 'next'},
   ]};
   const compressed = zlib.zstdCompressSync(Buffer.from(JSON.stringify(body)));
   assert.equal(await send('/responses', compressed, {'Content-Encoding': 'zstd', 'Content-Type': 'application/json'}), 200);
   const forwarded = JSON.parse(receipts[0].body.toString());
   assert.equal(receipts[0].headers['content-encoding'], undefined);
-  assert.equal(forwarded.input.length, 3);
+  assert.equal(forwarded.input.length, 4);
+  assert.deepEqual(forwarded.input.filter(item => item.type === 'web_search_call').map(item => item.id), ['ws_native']);
   assert.equal(forwarded.input[0].content[0].text, 'Earlier conversation summary:\nearlier work');
   assert.equal(forwarded.input[1].encrypted_content, 'gAAAA-native-openai');
   const tampered = {model: 'gpt-6-sol', input: [{type: 'compaction', encrypted_content: 'codex_claude_v1.gAAAAAtampered'}]};

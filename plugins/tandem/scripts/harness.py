@@ -38,6 +38,8 @@ CONTEXT_PREFIXES = ('# AGENTS.md instructions', '<environment_context>', '<user_
 EFFORTS = {'minimal': 'low', 'low': 'low', 'medium': 'medium', 'high': 'high', 'xhigh': 'xhigh', 'max': 'max'}
 # Claude Code internals with nothing useful to show.
 QUIET_TOOLS = ('ToolSearch',)
+# Shown with Codex's native web search rows. The id prefix lets the router drop them before GPT requests.
+WEB_SEARCH_PREFIX = 'ws_tandem_'
 KEEPALIVE_SECONDS = 15
 IDLE_SECONDS = 3600
 TRANSCRIPT_LIMIT = 200_000
@@ -161,6 +163,14 @@ def system_note(kinds):
     return '\n'.join(lines)
 
 
+def web_search_action(name, args):
+    if name == 'WebSearch' and args.get('query'):
+        return {'type': 'search', 'query': str(args['query'])}
+    if name == 'WebFetch' and args.get('url'):
+        return {'type': 'open_page', 'url': str(args['url'])}
+    return None
+
+
 def activity_label(name, args):
     def code(value):
         return '`' + str(value).replace('`', "'")[:200] + '`'
@@ -239,6 +249,7 @@ class Output:
         # Marks these items as local so the router never replays them to OpenAI.
         self.carrier = codec.encode({'type': 'claude_code', 'thread': thread})
         self.message = self.reasoning = None
+        self.searches = {}
         self.last_emit = time.monotonic()
         self.usage = {}
         self.context = self.cached = 0
@@ -318,6 +329,18 @@ class Output:
         self.thinking(text)
         self.close_reasoning()
 
+    def web_search(self, tool_use_id, action):
+        self.close_reasoning()
+        self.close_message('commentary')
+        item = {'id': WEB_SEARCH_PREFIX + uuid.uuid4().hex, 'type': 'web_search_call', 'status': 'in_progress', 'action': action}
+        self.searches[tool_use_id] = self.add(item)
+
+    def web_search_done(self, tool_use_id):
+        index = self.searches.pop(tool_use_id, None)
+        if index is not None:
+            self.output[index]['status'] = 'completed'
+            self.done(index)
+
     def call(self, call):
         self.close_reasoning()
         self.close_message('commentary')
@@ -332,6 +355,8 @@ class Output:
         self.context = usage['input_tokens'] + self.cached + usage.get('cache_creation_input_tokens', 0)
 
     def finish(self, final):
+        for tool_use_id in list(self.searches):
+            self.web_search_done(tool_use_id)
         self.close_reasoning()
         self.close_message('final_answer' if final else 'commentary')
         # Every response ends in an opaque checkpoint, even if it had no thinking.
@@ -343,6 +368,8 @@ class Output:
         self.send('response.completed', response=self.response('completed', usage))
 
     def fail(self, message):
+        for tool_use_id in list(self.searches):
+            self.web_search_done(tool_use_id)
         self.close_reasoning()
         self.close_message('commentary')
         self.send('response.failed', response=self.response('failed', error={'code': 'claude_code_error', 'message': message}))
@@ -749,8 +776,14 @@ class Harness:
                         if call is not None and not call.emitted:
                             out.call(call)
                             session.mark_emitted(call)
+                    elif main and web_search_action(name, block.get('input') or {}):
+                        out.web_search(block.get('id'), web_search_action(name, block.get('input') or {}))
                     elif main and name not in QUIET_TOOLS:
                         out.activity(activity_label(name, block.get('input') or {}))
+            elif kind == 'user' and event.get('parent_tool_use_id') is None:
+                for block in (event.get('message') or {}).get('content') or []:
+                    if isinstance(block, dict) and block.get('type') == 'tool_result':
+                        out.web_search_done(block.get('tool_use_id'))
             elif kind == 'system' and event.get('subtype') == 'compact_boundary':
                 out.activity('**Compacted context**')
             elif kind == 'result':

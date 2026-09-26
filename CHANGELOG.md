@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 — 2026-09-26
+
+- Claude Code's web searches and page fetches now appear in Codex's activity panel as native web search rows.
+- Those rows are removed before a GPT request if you switch the chat to GPT.
+- New plugin version folder, so updating works while Codex is running.
+
 ## 0.1.0 — 2026-09-26
 
 First public release.

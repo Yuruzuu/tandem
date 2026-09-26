@@ -11,6 +11,8 @@ const MODEL = 'claude-opus-5-5-claude-code';
 const UPSTREAM = 'https://chatgpt.com/backend-api/codex';
 const MAX_BODY = 256 * 1024 * 1024;
 const CARRIER_PREFIX = 'codex_claude_v1.';
+// Web searches Claude Code ran, reported as Codex web search items; OpenAI never saw them.
+const WEB_SEARCH_PREFIX = 'ws_tandem_';
 // Only Responses requests carry a model choice; every other native route is passed through untouched.
 const MODEL_ROUTE = /^\/responses(?:\/compact)?(?:\?|$)/;
 
@@ -45,6 +47,10 @@ function stripOpusArtifacts(body, carrierKey) {
   let changed = false;
   const input = [];
   for (const item of body.input) {
+    if (item?.type === 'web_search_call' && typeof item.id === 'string' && item.id.startsWith(WEB_SEARCH_PREFIX)) {
+      changed = true;
+      continue;
+    }
     if (typeof item?.encrypted_content !== 'string' || !item.encrypted_content.startsWith(CARRIER_PREFIX)) {
       input.push(item);
       continue;

@@ -57,6 +57,7 @@ Enabling changes only `openai_base_url` and `model_catalog_json` in `config.toml
 - **Not shared:** Codex's developer instructions, skills, plugins and MCP servers. Claude Code uses its own setup; your `AGENTS.md` and environment context are passed along.
 - **Switching models** mid-chat works both ways, except after compaction: Claude Code can't read GPT's compacted history, and GPT only sees a pointer to a compacted Claude Code session. Start a fresh chat for those.
 - **Sessions** resume automatically after interruptions and restarts, and idle ones stop after an hour.
+- **Activity panel:** commands, edits and web searches appear as Codex's own rows. Files Claude Code reads don't, since Codex only lists reads it ran itself, and like GPT's, Claude's thinking shows live and is hidden once the turn ends.
 - **Effort** in Codex maps to Claude Code's `--effort` (low to max).
 
 ## Uninstall and recovery

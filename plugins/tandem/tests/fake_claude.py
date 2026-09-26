@@ -38,6 +38,15 @@ for line in sys.stdin:
     if 'SILENT_FIXTURE' in words:
         time.sleep(60)
         continue
+    if 'search the web' in words:
+        # Claude Code runs its own web tools; the harness only reports them.
+        stream(f'm{turn}w', [{'type': 'tool_use', 'id': 'toolu_ws', 'name': 'WebSearch', 'input': {'query': 'tandem codex'}},
+                              {'type': 'tool_use', 'id': 'toolu_wf', 'name': 'WebFetch', 'input': {'url': 'https://example.com', 'prompt': 'x'}}])
+        out({'type': 'user', 'parent_tool_use_id': None, 'message': {'role': 'user', 'content': [
+            {'type': 'tool_result', 'tool_use_id': 'toolu_ws', 'content': 'results'}, {'type': 'tool_result', 'tool_use_id': 'toolu_wf', 'content': 'page'}]}})
+        stream(f'm{turn}x', [{'type': 'text', 'text': 'Found it.'}])
+        out({'type': 'result', 'subtype': 'success', 'is_error': False, 'result': 'ok'})
+        continue
     stream(f'm{turn}a', [{'type': 'thinking', 'thinking': 'Planning'}, {'type': 'text', 'text': 'Running it.'},
                           {'type': 'tool_use', 'id': f'toolu_{turn}', 'name': 'mcp__codex__exec_command', 'input': {'cmd': 'echo hi'}},
                           {'type': 'tool_use', 'id': f'toolu_read{turn}', 'name': 'Read', 'input': {'file_path': 'a.txt'}}])

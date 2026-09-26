@@ -86,6 +86,19 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(third[-1]['response']['output'][2]['call_id'], 'toolu_2')
         self.assertEqual(json.loads((self.state / 'harness-sessions.json').read_text())['thread-1']['cwd'], str(self.state))
 
+    def test_claude_code_web_tools_become_native_web_search_items(self):
+        rows = [
+            {'role': 'user', 'content': [{'type': 'input_text', 'text': f'<environment_context>\n  <cwd>{self.state}</cwd>\n</environment_context>'}]},
+            {'role': 'user', 'content': 'search the web'},
+        ]
+        events = self.turn(rows)
+        searches = [item for item in events[-1]['response']['output'] if item['type'] == 'web_search_call']
+        self.assertEqual([item['action'] for item in searches], [{'type': 'search', 'query': 'tandem codex'}, {'type': 'open_page', 'url': 'https://example.com'}])
+        self.assertTrue(all(item['status'] == 'completed' and item['id'].startswith(harness.WEB_SEARCH_PREFIX) for item in searches))
+        added = [event['item']['status'] for event in events if event['type'] == 'response.output_item.added' and event['item']['type'] == 'web_search_call']
+        self.assertEqual(added, ['in_progress', 'in_progress'])
+        self.assertEqual(events[-1]['response']['output'][-2]['content'][0]['text'], 'Found it.')
+
     def test_manifest_relays_only_codex_shell_and_patch_tools(self):
         manifest, kinds = harness.relay_manifest(TOOLS)
         self.assertEqual(kinds, {'exec_command': {'type': 'function', 'namespace': None}, 'apply_patch': {'type': 'custom', 'namespace': None}})
