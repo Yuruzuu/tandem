@@ -9,6 +9,17 @@ GPT keeps working exactly as before: same default model, same login, same reques
 > [!WARNING]
 > Tandem is an independent, experimental project. It is not affiliated with, endorsed by, or supported by Anthropic or OpenAI. It uses **your** Claude Code installation and **your** Claude login or API key, so your agreement with Anthropic governs that usage. Read [Terms and account risk](#terms-and-account-risk) before using it with a Claude subscription.
 
+> [!TIP]
+> **Why Tandem runs Claude Code as the harness instead of plugging Opus into Codex directly**
+>
+> The obvious way to put Opus in Codex is to treat it as a bare model: Codex sends its own prompt and tools, and something in between turns Claude Code into a raw model endpoint. Tandem's first version worked that way. It was dropped because:
+>
+> - **Your Claude login sat in the middle.** Claude Code's requests to Anthropic went through a local relay that forwarded your login token and edited the request body. Tandem doesn't touch Claude Code's traffic: the unmodified CLI talks straight to Anthropic, and nothing in Tandem ever sees your token.
+> - **It used Claude Code as a model API, not as Claude Code.** Tandem runs Claude Code with its own system prompt, tools, skills and context management, which is much closer to ordinary Claude Code use. It is still a third-party front end, so the warning above still applies.
+> - **It cost far more.** Codex sends every tool definition it has with each request: about 225k input tokens per request in testing, with no cache hits. Tandem requests were about 25k and mostly served from Anthropic's prompt cache.
+>
+> What didn't change: commands and file edits still run through Codex with its approvals and sandbox (Claude Code's own shell and edit tools are disabled), and GPT requests and OpenAI credentials never reach Claude Code.
+
 ## What you get
 
 - **Claude Code's harness inside Codex.** One long-lived `claude -p` session per Codex chat, resumed automatically after restarts.
